@@ -1,41 +1,27 @@
-import zipfile
-import xml.etree.ElementTree as ET
+from flask import Flask, request, jsonify
+import json
+from flask_cors import CORS 
 
-xlsx_path = "sample.xlsx"
+app = Flask(__name__)
+CORS(app) 
 
-# === Bước 1: Lấy chỉ số shared string từ cell D4 trong sheet1.xml ===
-with zipfile.ZipFile(xlsx_path, 'r') as z:
-    with z.open('xl/worksheets/sheet1.xml') as f:
-        sheet_tree = ET.parse(f)
-        sheet_root = sheet_tree.getroot()
-        ns = {'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+# Load từ điển
+with open("SinoNom_Similar_Dic_v2.json", encoding="utf-8") as f:
+    raw = json.load(f)
 
-        # Tìm ô D4
-        cell = sheet_root.find(".//a:c[@r='D6']", ns)
-        if cell is None:
-            print("❌ Không tìm thấy ô D4.")
-            exit()
-        shared_string_index = int(cell.find("a:v", ns).text)
+# Chuyển từ pandas-export sang dict thực
+input_chars = list(raw["Input Character"].values())
+similar_lists = [eval(x) for x in raw["Top 20 Similar Characters"].values()]
+similar_dict = dict(zip(input_chars, similar_lists))
 
-    # === Bước 2: Lấy chuỗi định dạng từ sharedStrings.xml ===
-    with z.open('xl/sharedStrings.xml') as f:
-        ss_tree = ET.parse(f)
-        ss_root = ss_tree.getroot()
+@app.route("/suggest", methods=["GET"])
+def suggest():
+    char = request.args.get("char", "")
+    suggestions = similar_dict.get(char, [])
+    return jsonify({
+        "input": char,
+        "suggestions": suggestions
+    })
 
-        # Lấy phần tử <si> tương ứng chỉ số
-        si = ss_root.findall("a:si", ns)[shared_string_index]
-
-        print(f"🎯 Nội dung ô D1:")
-
-        for r in si.findall("a:r", ns):
-            text = r.find("a:t", ns).text
-            rPr = r.find("a:rPr", ns)
-            
-            # Lấy màu nếu có
-            color_tag = rPr.find("a:color", ns) if rPr is not None else None
-            color = color_tag.attrib.get("rgb") if color_tag is not None else "default"
-            
-            # Lấy font nếu có
-            font_tag = rPr.find("a:rFont", ns) if rPr is not None else None
-            font = font_tag.attrib.get("val") if font_tag is not None else "default"
-            print(f"  - Text: {text} | Font: {font} | Color: {color}")
+if __name__ == "__main__":
+    app.run(debug=True)

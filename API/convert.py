@@ -143,5 +143,7 @@ class PROCESS_XLXS(INFO_XML):
             sequence = self.get_rich_text_info(name)
             dict_["Name"].append(name)
             dict_["Config"].append(sequence)
-        
         return pd.DataFrame(dict_)
+    
+x = PROCESS_XLXS(xlsx_path)
+info = x.process("SinoNom OCR")
