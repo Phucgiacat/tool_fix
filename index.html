@@ -24,6 +24,8 @@
 <div id="sentence-container"></div>
 
 <script>
+
+
 // Hàm ARGB -> CSS
 function argbToHex(argb) {
   if (!argb || argb === 'default') return '#000000';
@@ -66,7 +68,6 @@ function renderSentences(data) {
           .then(res => res.json())
           .then(data => {
             const similars = data.suggestions;
-
             if (!similars || similars.length === 0) {
               alert(`Không có gợi ý cho "${realText}"`);
               return;
@@ -116,6 +117,7 @@ document.getElementById('jsonFileInput').addEventListener('change', function(eve
   };
   reader.readAsText(file, 'UTF-8');
 });
+
 </script>
 
 </body>
