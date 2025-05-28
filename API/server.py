@@ -67,8 +67,7 @@ def suggest():
     char = request.args.get("char", "")
     try:
         df = pd.read_excel("dict/SinoNom_Similar_Dic_v2.xlsx")
-        df = df.dropna(subset=["Input", "Suggestions"])
-        suggestions = df[df["Input"] == char]["Suggestions"]
+        suggestions = df[df["Input Character"] == char]["Top 20 Similar Characters"]
 
         if suggestions.empty:
             return jsonify({"input": char, "suggestions": []})
