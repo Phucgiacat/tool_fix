@@ -66,15 +66,13 @@ def get_sequence():
 def suggest():
     char = request.args.get("char", "")
     try:
-        df = pd.read_excel("dict/SinoNom_Similar_Dic_v2.xlsx")
-        suggestions = df[df["Input Character"] == char]["Top 20 Similar Characters"]
+        df = pd.read_excel("dict/QuocNgu_SinoNom_Dic.xlsx")
+        suggestions = list(df[df["QuocNgu"] == char]["SinoNom"])
 
-        if suggestions.empty:
-            return jsonify({"input": char, "suggestions": []})
-
-        # Nếu Suggestions là chuỗi JSON-like, parse nó
-        suggestion_list = ast.literal_eval(suggestions.values[0])
-        return jsonify({"input": char, "suggestions": suggestion_list})
+        return jsonify({
+            "input": char,
+            "suggestions": suggestions
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
