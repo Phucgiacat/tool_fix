@@ -12,7 +12,7 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
       const reader = new FileReader();
       reader.onload = function (event) {
         const cxCharColors = {};
-        const cxCharTexts = {};  // để lưu lại từng chữ ở C sau khi gọi API
+        const cxCharTexts = {}; 
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array', cellStyles: true });
         const sheetName = workbook.SheetNames[0];
@@ -50,7 +50,6 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
             cxFetchTasks.push(task);
           }
         }
-
         Promise.all(cxFetchTasks).then(() => {
           let tableMatrix = [];
 
@@ -100,12 +99,70 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
           }
 
           Promise.all(tableMatrix).then(rows => {
+            // Hiển thị ảnh khi hover vào dòng (x >= 2)
+            const aColumnCache = {};
+            for (let row = range.s.r + 1; row <= range.e.r; row++) {
+              const rowNumber = row + 1;
+              const aCell = worksheet[`A${rowNumber}`];
+              aColumnCache[row] = aCell?.v ?? '';
+            }
+
+            // Gắn lại bảng kèm data-img
             let html = '<table border="1" cellspacing="0" cellpadding="5">';
-            rows.forEach(cells => {
-              html += '<tr>' + cells.join('') + '</tr>';
+            rows.forEach((cells, i) => {
+              const dataImg = i >= 1 ? ` data-img="${aColumnCache[i] || ''}"` : '';
+              html += `<tr${dataImg}>${cells.join('')}</tr>`;
             });
             html += '</table>';
             document.getElementById("output").innerHTML = html;
+            // Thêm container cố định bên phải nếu chưa có
+            if (!document.getElementById('side-image-box')) {
+              const sideBox = document.createElement('div');
+              sideBox.id = 'side-image-box';
+              sideBox.style.position = 'fixed';
+              sideBox.style.top = '10px';
+              sideBox.style.right = '10px';
+              sideBox.style.width = '220px';
+              sideBox.style.padding = '6px';
+              sideBox.style.border = '1px solid #ccc';
+              sideBox.style.background = '#fff';
+              sideBox.style.boxShadow = '0 0 8px rgba(0,0,0,0.2)';
+              sideBox.style.display = 'none';
+              sideBox.style.zIndex = 9999;
+
+              const title = document.createElement('div');
+              title.style.marginBottom = '6px';
+              title.style.fontWeight = 'bold';
+              title.textContent = 'Ảnh dòng đang trỏ';
+
+              const img = document.createElement('img');
+              img.id = 'side-image';
+              img.style.maxWidth = '100%';
+              img.style.maxHeight = '300px';
+              img.style.border = '1px solid #eee';
+
+              sideBox.appendChild(title);
+              sideBox.appendChild(img);
+              document.body.appendChild(sideBox);
+            }
+
+            // Gắn sự kiện hover
+            document.querySelectorAll('tr[data-img]').forEach(tr => {
+              tr.addEventListener('mouseenter', () => {
+                const id = tr.dataset.img;
+                if (!id) return;
+                const sideBox = document.getElementById('side-image-box');
+                const sideImg = document.getElementById('side-image');
+                sideImg.src = `D:/learning/lab NLP/week02/2505/RCM_001_000/images_label/crop_img/${id}`;
+                sideBox.style.display = 'block';
+              });
+
+              tr.addEventListener('mouseleave', () => {
+                const sideBox = document.getElementById('side-image-box');
+                sideBox.style.display = 'none';
+              });
+            });
+
 
             // Gắn click cho chữ ở cột E để sửa chữ ở cột C
             document.querySelectorAll('.char-ex').forEach(span => {
@@ -138,7 +195,6 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
                       }
                       select.remove();
                     });
-
                     span.after(select);
                   })
                   .catch(err => {

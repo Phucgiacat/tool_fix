@@ -79,6 +79,27 @@
   z-index: 1;
   visibility: visible;
 }
+#side-image-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+  display: none;
+  z-index: 1000;
+}
+
+
+#output table {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 999;
+}
+
 
 .menu-gold, .menu-gold a{
   color: #000;
