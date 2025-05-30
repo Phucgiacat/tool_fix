@@ -5,7 +5,7 @@ from flask_cors import CORS
 from convert import PROCESS_XLXS
 import os
 import ast
-import sys
+import rotate
 
 
 app = Flask(__name__)
@@ -23,6 +23,8 @@ def upload_file():
 
     try:
         file = request.files['file']
+        folder_path = request.form.get("path_folder")
+        print(folder_path)
         os.makedirs("data/upload", exist_ok=True)
         save_path = os.path.join("data/upload", "samples.xlsx")
         file.save(save_path)
@@ -33,7 +35,8 @@ def upload_file():
             return jsonify({"error": "Không tìm thấy cột SinoNom_OCR"}), 400
 
         df.to_csv("info.csv", index=False)
-        print("hello", flush=True, file=sys.stderr)
+        rotate.handle_rotate(path_folder=folder_path)
+
         return jsonify({"message": "File đã lưu thành công", "path": save_path})
 
     except Exception as e:
@@ -61,21 +64,25 @@ def get_sequence():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Đọc 1 lần khi server khởi động
+try:
+    df_dict = pd.read_excel("dict/QuocNgu_SinoNom_Dic.xlsx")
+    suggest_map = df_dict.groupby("QuocNgu")["SinoNom"].apply(list).to_dict()
+except Exception as e:
+    print("❌ Lỗi load từ điển:", e)
+    suggest_map = {}
 
 @app.route("/suggest", methods=["GET"])
 def suggest():
     char = request.args.get("char", "")
     try:
-        df = pd.read_excel("dict/QuocNgu_SinoNom_Dic.xlsx")
-        suggestions = list(df[df["QuocNgu"] == char]["SinoNom"])
-
+        suggestions = suggest_map.get(char, [])
         return jsonify({
             "input": char,
             "suggestions": suggestions
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(debug=True)

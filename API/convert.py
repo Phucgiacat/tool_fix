@@ -105,14 +105,20 @@ class PROCESS_XLXS(INFO_XML):
         if not os.path.exists(self.output_folder):
             self.unzip_xlsx_to_xml_folder()
         column_map = self.get_column_headers()
+        ###
+        # {
+        #     "Sino Nom": "A",
+        #     "Text": "B"
+        # }
+        #
         if name_column not in column_map:
             return None
         column = column_map[name_column]
         num_row = self.count_rows_in_column(column)
         data = {"Name": [], "Config": []}
         for idx in tqdm(range(2, num_row + 2), desc="Process file", unit="lines"):
-            name = f"{column}{idx}"
+            name = f"{column}{idx}"# C2
             sequence = self.get_rich_text_info(name)
             data["Name"].append(name)
             data["Config"].append(sequence)
-        return pd.DataFrame(data)
+        return pd.DataFrame(data)##

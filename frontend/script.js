@@ -1,7 +1,9 @@
 document.getElementById('excelFile').addEventListener('change', function (e) {
   const file = e.target.files[0];
+  const inputValue = document.getElementById("path_image").value;
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("path_folder", inputValue);
 
   fetch("http://127.0.0.1:5000/upload", {
     method: "POST",
@@ -50,12 +52,11 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
             cxFetchTasks.push(task);
           }
         }
+
         Promise.all(cxFetchTasks).then(() => {
           let tableMatrix = [];
-
           for (let row = range.s.r; row <= range.e.r; row++) {
             let rowCells = [];
-
             for (let col = range.s.c; col <= range.e.c; col++) {
               const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
               const cell = worksheet[cellAddress];
@@ -64,7 +65,6 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
 
               if (cell) {
                 const cellValue = cell.v ?? "";
-
                 if (columnLetter === 'C' && rowNumber >= 2) {
                   const chars = cxCharTexts[rowNumber] || [];
                   const colors = cxCharColors[rowNumber] || [];
@@ -131,6 +131,12 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
               sideBox.style.zIndex = 9999;
 
               const title = document.createElement('div');
+              sideBox.style.display = 'none';
+              sideBox.style.zIndex = 9999;
+              sideBox.style.display = 'flex';            // thêm dòng này
+              sideBox.style.flexDirection = 'column';    // để dồn dọc
+              sideBox.style.alignItems = 'center';       // canh giữa ngang
+              sideBox.style.justifyContent = 'center';   // canh giữa dọc
               title.style.marginBottom = '6px';
               title.style.fontWeight = 'bold';
               title.textContent = 'Ảnh dòng đang trỏ';
@@ -147,23 +153,27 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
             }
 
             // Gắn sự kiện hover
-            document.querySelectorAll('tr[data-img]').forEach(tr => {
-              tr.addEventListener('mouseenter', () => {
-                const id = tr.dataset.img;
-                if (!id) return;
-                const sideBox = document.getElementById('side-image-box');
-                const sideImg = document.getElementById('side-image');
-                sideImg.src = `D:/learning/lab NLP/week02/2505/RCM_001_000/images_label/crop_img/${id}`;
-                sideBox.style.display = 'block';
+              // Gắn sự kiện hover + tô nền hàng
+              document.querySelectorAll('tr[data-img]').forEach(tr => {
+                tr.addEventListener('mouseenter', () => {
+                  const id = tr.dataset.img;
+                  if (!id) return;
+
+                  tr.style.backgroundColor = '#eee'; // tô xám dòng
+
+                  const sideBox = document.getElementById('side-image-box');
+                  const sideImg = document.getElementById('side-image');
+                  sideImg.src = `${inputValue}/${id}`;
+                  sideBox.style.display = 'block';
+                });
+
+                tr.addEventListener('mouseleave', () => {
+                  tr.style.backgroundColor = ''; // bỏ tô xám khi rời chuột
+
+                  const sideBox = document.getElementById('side-image-box');
+                  sideBox.style.display = 'none';
+                });
               });
-
-              tr.addEventListener('mouseleave', () => {
-                const sideBox = document.getElementById('side-image-box');
-                sideBox.style.display = 'none';
-              });
-            });
-
-
             // Gắn click cho chữ ở cột E để sửa chữ ở cột C
             document.querySelectorAll('.char-ex').forEach(span => {
               span.addEventListener('click', () => {
@@ -171,30 +181,57 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
                 const row = span.dataset.row;
                 const index = span.dataset.index;
 
+                const cxSpan = document.querySelector(`.char-cx[data-row="${row}"][data-index="${index}"]`);
+                if (cxSpan) {
+                  cxSpan.style.backgroundColor = '#ffff99'; // tô vàng khi chọn
+                }
                 fetch(`http://127.0.0.1:5000/suggest?char=${encodeURIComponent(originalText)}`)
                   .then(r => r.json())
                   .then(data => {
                     const suggestions = data.suggestions;
                     if (!suggestions.length) return alert(`Không có gợi ý cho '${originalText}'`);
 
-                    const select = document.createElement('select');
-                    suggestions.forEach(s => {
-                      const option = document.createElement('option');
-                      option.value = s;
-                      option.textContent = s;
-                      select.appendChild(option);
-                    });
+                  const select = document.createElement('select');
 
-                    select.addEventListener('change', () => {
-                      const newChar = select.value;
-                      const cxSpan = document.querySelector(`.char-cx[data-row="${row}"][data-index="${index}"]`);
-                      if (cxSpan) {
-                        cxSpan.textContent = newChar;
-                        cxSpan.style.color = 'green';
-                        cxSpan.style.fontWeight = 'bold';
-                      }
-                      select.remove();
-                    });
+                  // Thêm option rỗng đầu tiên
+                  const emptyOption = document.createElement('option');
+                  emptyOption.textContent = ''; // hiển thị khoảng trắng
+                  emptyOption.disabled = true;
+                  emptyOption.selected = true;
+                  select.appendChild(emptyOption);
+
+                  // Thêm các gợi ý từ API
+                  suggestions.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = s;
+                    select.appendChild(option);
+                  });
+
+
+                  select.addEventListener('change', () => {
+                    applyChange();
+                  });
+
+                  // Cũng gọi khi vừa tạo dropdown — nếu người không đổi, vẫn cập nhật
+                  select.addEventListener('blur', () => {
+                    if (document.body.contains(select)) {
+                      applyChange();
+                    }
+                  });
+
+                  function applyChange() {
+                    const newChar = select.value;
+                    const cxSpan = document.querySelector(`.char-cx[data-row="${row}"][data-index="${index}"]`);
+                    if (cxSpan) {
+                      cxSpan.textContent = newChar;
+                      cxSpan.style.color = 'green';
+                      cxSpan.style.fontWeight = 'bold';
+                      cxSpan.style.backgroundColor = '';
+                    }
+                    select.remove();
+                  }
+
                     span.after(select);
                   })
                   .catch(err => {
@@ -203,6 +240,58 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
                   });
               });
             });
+// Gắn hover highlight đồng thời cho cả char-ex và char-cx
+document.querySelectorAll('.char-ex').forEach(span => {
+  span.addEventListener('mouseenter', () => {
+    const row = span.dataset.row;
+    const index = span.dataset.index;
+
+    const cxSpan = document.querySelector(`.char-cx[data-row="${row}"][data-index="${index}"]`);
+    if (cxSpan) {
+      cxSpan.style.backgroundColor = '#ffff99';
+      span.style.backgroundColor = '#ffff99';  // vàng nhạt
+      cxSpan.style.backgroundColor = '#ffff99';
+    }
+  });
+
+  span.addEventListener('mouseleave', () => {
+    const row = span.dataset.row;
+    const index = span.dataset.index;
+
+    const cxSpan = document.querySelector(`.char-cx[data-row="${row}"][data-index="${index}"]`);
+    if (cxSpan) {
+      span.style.backgroundColor = '';
+      cxSpan.style.backgroundColor = '';
+    }
+  });
+});
+
+document.querySelectorAll('.char-cx').forEach(span => {
+  span.addEventListener('mouseenter', () => {
+    const row = span.dataset.row;
+    const index = span.dataset.index;
+
+    const exSpan = document.querySelector(`.char-ex[data-row="${row}"][data-index="${index}"]`);
+    if (exSpan) {
+      span.style.backgroundColor = '#ffffcc';  // khác màu tí
+      exSpan.style.backgroundColor = '#ffffcc';
+    }
+  });
+
+  span.addEventListener('mouseleave', () => {
+    const row = span.dataset.row;
+    const index = span.dataset.index;
+
+    const exSpan = document.querySelector(`.char-ex[data-row="${row}"][data-index="${index}"]`);
+    if (exSpan) {
+      span.style.backgroundColor = '';
+      exSpan.style.backgroundColor = '';
+    }
+  });
+});
+
+
+
           });
         });
       };
