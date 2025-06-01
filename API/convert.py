@@ -26,6 +26,8 @@ class INFO_XML(CONVERT_TO_XML):
         super().__init__(xlsx_path)
         self.shared_strings_path = os.path.join(self.output_folder, "xl/sharedStrings.xml")
         self.set_sheetname()
+
+    def init_parameter(self):
         self.ns = {'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 
         # Parse shared strings and sheet XML once for reuse
@@ -102,15 +104,9 @@ class PROCESS_XLXS(INFO_XML):
         super().__init__(xlsx_path)
 
     def process(self, name_column):
-        if not os.path.exists(self.output_folder):
-            self.unzip_xlsx_to_xml_folder()
+        self.unzip_xlsx_to_xml_folder()
+        self.init_parameter()
         column_map = self.get_column_headers()
-        ###
-        # {
-        #     "Sino Nom": "A",
-        #     "Text": "B"
-        # }
-        #
         if name_column not in column_map:
             return None
         column = column_map[name_column]

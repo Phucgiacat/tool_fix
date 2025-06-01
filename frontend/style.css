@@ -68,3 +68,7 @@ input[type="file"] {
   margin: auto;
   object-fit: contain;
 }
+
+table{
+  color: black;
+}

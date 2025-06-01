@@ -6,7 +6,7 @@ from convert import PROCESS_XLXS
 import os
 import ast
 import rotate
-
+import time
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Cho phép mọi nguồn truy cập
@@ -24,19 +24,16 @@ def upload_file():
     try:
         file = request.files['file']
         folder_path = request.form.get("path_folder")
-        print(folder_path)
         os.makedirs("data/upload", exist_ok=True)
         save_path = os.path.join("data/upload", "samples.xlsx")
         file.save(save_path)
-
         data = PROCESS_XLXS(save_path)
         df = data.process("SinoNom_OCR")
         if df is None:
             return jsonify({"error": "Không tìm thấy cột SinoNom_OCR"}), 400
-
+        
         df.to_csv("info.csv", index=False)
         rotate.handle_rotate(path_folder=folder_path)
-
         return jsonify({"message": "File đã lưu thành công", "path": save_path})
 
     except Exception as e:

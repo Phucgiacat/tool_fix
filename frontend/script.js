@@ -84,11 +84,7 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
                 }
 
                 else {
-                  let color = "000000";
-                  if (cell.s?.font?.color?.rgb) {
-                    color = cell.s.font.color.rgb;
-                  }
-                  rowCells.push(Promise.resolve(`<td style="color:#${color}">${cellValue}</td>`));
+                rowCells.push(Promise.resolve(`<td style="color:#000000">${cellValue}</td>`));
                 }
               } else {
                 rowCells.push(Promise.resolve('<td></td>'));
