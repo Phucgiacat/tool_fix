@@ -285,9 +285,6 @@ document.querySelectorAll('.char-cx').forEach(span => {
     }
   });
 });
-
-
-
           });
         });
       };
@@ -296,4 +293,55 @@ document.querySelectorAll('.char-cx').forEach(span => {
     .catch(err => {
       console.error("Lỗi:", err);
     });
+});
+
+function inlineAllStyles(element) {
+  const clone = element.cloneNode(true);
+  const allElements = clone.querySelectorAll("*");
+
+  allElements.forEach(el => {
+    const computedStyle = getComputedStyle(el);
+    for (let i = 0; i < computedStyle.length; i++) {
+      const key = computedStyle[i];
+      el.style[key] = computedStyle.getPropertyValue(key);
+    }
+  });
+
+  const rootStyle = getComputedStyle(clone);
+  for (let i = 0; i < rootStyle.length; i++) {
+    const key = rootStyle[i];
+    clone.style[key] = rootStyle.getPropertyValue(key);
+  }
+
+  return clone.outerHTML;
+}
+
+document.getElementById('send-table-to-server').addEventListener('click', () => {
+  const outputDiv = document.getElementById('output');
+  const path_excel = document.getElementById("path_excel").value;
+  const table = outputDiv.querySelector('table');
+
+  if (!table) {
+    alert("Không tìm thấy bảng!");
+    return;
+  }
+
+  const inlineHTML = inlineAllStyles(table);
+
+  fetch('http://127.0.0.1:5000/save_table', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      table_html: inlineHTML,
+      path_excel: path_excel // ✅ thêm dòng này
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert("✅ Đã gửi bảng về server"))
+  .catch(err => {
+    console.error("❌ Lỗi khi gửi bảng:", err);
+    alert("Không gửi được bảng về server");
+  });
 });

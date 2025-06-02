@@ -7,6 +7,8 @@ import os
 import ast
 import rotate
 import time
+from handle_html import extract_text_with_color, write_colored_excel_from_chunks
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Cho phép mọi nguồn truy cập
@@ -77,6 +79,33 @@ def suggest():
         return jsonify({
             "input": char,
             "suggestions": suggestions
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/save_table", methods=["POST"])
+def save_table():
+    data = request.get_json()
+    table_html = data.get("table_html", "")
+    path_excel = data.get("path_excel", "result.xlsx")  # ✅ lấy path từ client
+    
+    if not table_html:
+        return jsonify({"error": "Không có bảng gửi lên"}), 400
+
+    try:
+        # Lưu HTML tạm thời để xử lý
+        os.makedirs("data", exist_ok=True)
+        html_path = "data/result.html"
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(table_html)
+
+        # Gọi hàm xử lý
+        data = extract_text_with_color(html_path)
+        write_colored_excel_from_chunks(data, output_path=path_excel)
+
+        return jsonify({
+            "status": "ok",
+            "message": f"✅ Đã lưu bảng vào {path_excel}"
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

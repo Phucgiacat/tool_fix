@@ -1,74 +1,96 @@
-/* menu */
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f7fa;
+    margin: 0;
+    padding: 30px;
+  }
 
-.block {
-  max-width: 100%;
-  width: 400px;
-  height: 500px;
-}
+  .group {
+    background: #ffffff;
+    max-width: 600px;
+    margin: auto;
+    border-radius: 12px;
+    padding: 24px 32px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
 
-#path_image {
-  opacity: 0.8;
-  width: 200px;
-  transition: all 0.4s ease;
-  border-radius: 20px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  background-color: gray;
-  color: white;
-}
-.path{
-  margin-right: 70px;
-}
+  .path.title {
+    margin-bottom: 18px;
+    font-weight: bold;
+    color: #333;
+  }
 
-.title{
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-weight: bold;
-}
+  .path.title input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
 
-#path_image:hover {
+  .path.title input[type="text"]:focus {
+    border-color: #4CAF50;
+    outline: none;
+  }
+
+  .custom-file-upload {
+    display: inline-block;
+    padding: 10px 16px;
+    margin-top: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px;
+    background-color: #007BFF;
+    color: #fff;
+    transition: background-color 0.3s ease;
+  }
+
+  .custom-file-upload:hover {
+    background-color: #0056b3;
+  }
+
+  .custom-file-upload input[type="file"] {
+    display: none;
+  }
+
+  .pretty-button {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+
+  .pretty-button:hover {
+    background-color: #45a049;
+    transform: scale(1.02);
+  }
+
+  .pretty-button:active {
+    background-color: #3e8e41;
+    transform: scale(0.98);
+  }
+
+  #output {
+    margin-top: 24px;
+    font-size: 14px;
+    color: #333;
+  }
+
+#path_excel:hover {
   opacity: 1;
-}
-
-
-input[type="file"] {
-  display: none;
-}
-
-.group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-
-.custom-file-upload {
-  position: relative;
-  display: inline-block;
-  padding: 10px 20px;
-  border: 1px solid #363232;
-  border-radius: 20px;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.hover-text {
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 0.4s ease;
-  display: inline-block;
-}
-
-.custom-file-upload:hover .hover-text {
-  opacity: 1;
-  transform: translateX(0);
 }
 #side-image {
   display: block;
   margin: auto;
   object-fit: contain;
-}
-
-table{
-  color: black;
 }
