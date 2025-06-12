@@ -359,30 +359,31 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
     body: formData
   })
     .then(res => res.json())
-    .then(data => {
+    .then(() => {
       const reader = new FileReader();
-      reader.onload = function (event) {
+
+      reader.onload = async function (event) {
         const cxCharColors = {};
-        const cxCharTexts = {}; 
+        const cxCharTexts = {};
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array', cellStyles: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const range = XLSX.utils.decode_range(worksheet['!ref']);
 
-        const cxFetchTasks = [];
+        // 🔁 Gọi API tuần tự để tránh overload
+        async function fetchCxDataSequentially() {
+          for (let row = range.s.r; row <= range.e.r; row++) {
+            const rowNumber = row + 1;
+            const cellAddress = `C${rowNumber}`;
+            const cell = worksheet[cellAddress];
 
-        // Giai đoạn 1: gọi API để lấy từng chữ và màu của cột C
-        for (let row = range.s.r; row <= range.e.r; row++) {
-          const rowNumber = row + 1;
-          const cellAddress = `C${rowNumber}`;
-          const cell = worksheet[cellAddress];
-          if (cell && rowNumber >= 2) {
-            const task = fetch(`http://127.0.0.1:5000/sequence?char=${cellAddress}`)
-              .then(res => res.json())
-              .then(data => {
-                const colors = [];
-                const chars = [];
+            if (cell && rowNumber >= 2) {
+              try {
+                const res = await fetch(`http://127.0.0.1:5000/sequence?char=${cellAddress}`);
+                const data = await res.json();
+                const colors = [], chars = [];
+
                 data.forEach(item => {
                   const itemColor = item.Color && item.Color !== 'default'
                     ? `#${item.Color.replace(/^FF/, '')}`
@@ -390,19 +391,20 @@ document.getElementById('excelFile').addEventListener('change', function (e) {
                   colors.push(itemColor);
                   chars.push(item.Text);
                 });
+
                 cxCharColors[rowNumber] = colors;
                 cxCharTexts[rowNumber] = chars;
-              })
-              .catch(err => {
+              } catch (err) {
                 console.error(`Lỗi API cho ô ${cellAddress}:`, err);
                 cxCharColors[rowNumber] = [];
                 cxCharTexts[rowNumber] = [];
-              });
-            cxFetchTasks.push(task);
+              }
+            }
           }
         }
 
-        Promise.all(cxFetchTasks).then(() => {
+        await fetchCxDataSequentially(); // ✅ Gọi tuần tự
+                  
           let tableMatrix = [];
           for (let row = range.s.r; row <= range.e.r; row++) {
             let rowCells = [];
@@ -636,8 +638,7 @@ document.querySelectorAll('.char-cx').forEach(span => {
   });
 });
           });
-        });
-      };
+        }
       reader.readAsArrayBuffer(file);
     })
     .catch(err => {

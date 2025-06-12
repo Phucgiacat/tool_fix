@@ -58,16 +58,28 @@ class INFO_XML(CONVERT_TO_XML):
 
         si = self.si_list[index]
         sentence = []
+
         for r in si.findall("a:r", self.ns):
-            text = r.find("a:t", self.ns).text or ""
+            t_elem = r.find("a:t", self.ns)
+            text = t_elem.text if t_elem is not None else ""
+
             rPr = r.find("a:rPr", self.ns)
+            font = (
+                rPr.find("a:rFont", self.ns).attrib.get("val")
+                if rPr is not None and rPr.find("a:rFont", self.ns) is not None
+                else "default"
+            )
+            color = (
+                rPr.find("a:color", self.ns).attrib.get("rgb")
+                if rPr is not None and rPr.find("a:color", self.ns) is not None
+                else "default"
+            )
 
-            font = rPr.find("a:rFont", self.ns).attrib.get("val") if rPr is not None and rPr.find("a:rFont", self.ns) is not None else "default"
-            color = rPr.find("a:color", self.ns).attrib.get("rgb") if rPr is not None and rPr.find("a:color", self.ns) is not None else "default"
+            for char in text:
+                sentence.append({"Text": char, "Font": font, "Color": color})
 
-            word = {"Text": text, "Font": font, "Color": color}
-            sentence.append(word)
-        return sentence
+        return sentence if sentence else None
+
 
     def count_rows_in_column(self, column_letter):
         count = 0
